@@ -9,21 +9,31 @@ use App\Models\Count;
 use Illuminate\Support\Facades\Http;
 use App\Jobs\InsertNewDomainsJob;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DomainController extends Controller
 {
     public function processDomains(Request $request)
     {
         $token = $request->input('token');
-        $domainsString = $request->input('domains');
-
+        $domainsString = $request->get('domains'); // Use get() instead of input()
+        
+        Log::info('Raw Request Data:', ['request' => $request->all()]);
+        
         // Validate token
         if (!AuthToken::where('token', $token)->exists()) {
             return response()->json(['error' => 'Invalid authentication token'], 401);
         }        
 
+        // Ensure domainsString is not null
+        if (!$domainsString || !is_string($domainsString)) {
+            return response()->json(['error' => 'Invalid domains format'], 400);
+        }
+
         // Convert domains string to array
         $domains = array_map('trim', explode(',', $domainsString));
+
+        Log::info('Parsed Domains:', ['domains' => $domains]);
 
         // Process domains asynchronously
         InsertNewDomainsJob::dispatch($domains);
@@ -31,6 +41,7 @@ class DomainController extends Controller
         // Return response immediately
         return response()->json(['message' => 'Processing started']);
     }
+
 
     public function fetchDomains(Request $request)
     {

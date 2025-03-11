@@ -127,8 +127,7 @@ class ScrapeAndCategorizeJob implements ShouldQueue
                 ]);
     
                 // Insert into history_table
-                HistoryTable::create([
-                    'domain_id' => $site,
+                HistoryTable::where('domain_id', $site)->update([
                     'is_subdomain' => $isSubdomain, 
                     'main_domain' => $mainDomain, 
                     'redirected_to' => $finalUrl,
